@@ -1,0 +1,149 @@
+from tkinter import *
+from tkinter import messagebox
+from PIL import ImageTk, Image
+import pymongo
+from bson.objectid import ObjectId
+
+ventana = Tk()
+###########################################################################################
+
+
+##Variables de entorno para la aplicación
+ventana.title('Librería')
+ventana.resizable(0,0)
+ventana.geometry('800x500')
+ventana.iconbitmap('doctor.ico')
+fondo = PhotoImage(file = 'toros.gif')
+fondo1 = Label(ventana, image=fondo).place(x=0, y=0, relwidth=1, relheight=1)
+###########################################################################################
+
+
+##Variables de control
+conexion = StringVar(value="mongodb+srv://root:root@clusterulsa.k0ok2.mongodb.net/Biblioteca")
+
+strConnection = StringVar()
+strColecction = StringVar()
+strUsuario = StringVar()
+strContraseña = StringVar()
+strDB = StringVar()
+strCluster = StringVar()
+strColeccion = StringVar()
+strTitulo = StringVar()
+strISBN = StringVar()
+strAutores = StringVar()
+strAño = StringVar()
+
+
+##Funcionesd de la aplicación
+def addBook():
+    data = {
+        "ISBN": strISBN.get(),
+        "titulo": strTitulo.get(),
+        "autores": strAutores.get(),
+        "año": strAño.get(),
+    }
+
+    try:
+        con = pymongo.MongoClient(conexion.get())
+        db = con[strDB.get()]
+        col = db[strColeccion.get()]
+        resultado = col.insert_one(data)
+        messagebox.showinfo("Guardado", "Dato guardado con ID: " + str(resultado.inserted_id))
+
+    except Exception as err:
+        messagebox.showinfo("Error", "Error", str(err))
+
+########################
+
+def findBook():
+    filterToFind = {
+        "ISBN": strISBN.get()
+    }
+    
+    try:
+        con = pymongo.MongoClient(conexion.get())
+        db = con[strDB.get()]
+        col = db[strColeccion.get()]
+        resultado = col.find(filterToFind)
+
+        for data in resultado:
+            messagebox.showinfo("Resultado", "Libro encontrado: " + str(data))
+
+    except Exception as err:
+        messagebox.showinfo("Error", "Error", str(err))
+
+def updateBook():
+    filterToUpdate = {
+        "ISBN": strISBN.get()
+    }
+    
+    data = {
+        "$set": {
+            "ISBN": strISBN.get(),
+            "titulo": strTitulo.get(),
+            "autores": strAutores.get(),
+            "año": strAño.get(),
+        }
+    }
+
+    try:
+        con = pymongo.MongoClient(conexion.get())
+        db = con[strDB.get()]
+        col = db[strColeccion.get()]
+        resultado = col.update_one(filterToUpdate, data)
+        messagebox.showinfo("Guardado", "Dato actualizado: " + str(resultado))
+
+    except Exception as err:
+        messagebox.showinfo("Error", "Error", str(err))
+
+def deteleBook():
+    
+    filterToDelete = {
+        "ISBN": strISBN.get()
+    }
+    
+    try:
+        con = pymongo.MongoClient(conexion.get())
+        db = con[strDB.get()]
+        col = db[strColeccion.get()]
+        resultado = col.delete_one(filterToDelete)
+        
+        if resultado:
+            messagebox.showinfo("Eliminado", "Dato eliminado: " + str(resultado))
+            
+        else:
+            messagebox.showinfo("Error", "Error", str(err))
+
+    except Exception as err:
+        messagebox.showinfo("Error", "Error", str(err))
+
+
+
+label = Label(ventana, text="Cadena de Conexión: ", bg="goldenrod", fg="white", relief=RAISED ).grid(row=0, column=0, sticky=NSEW, columnspan=1)
+Entry(ventana, textvariable=conexion).grid(row=0, column=1, sticky=NSEW, columnspan=1)
+###################
+label = Label(ventana, text="DB: ", bg="goldenrod", fg="white", relief=RAISED ).grid(row=1, column=0, sticky=NSEW)
+Entry(ventana, textvariable=strDB).grid(row=1, column=1, sticky=NSEW)
+###################
+label = Label(ventana, text="Colección: ", bg="goldenrod", fg="white", relief=RAISED ).grid(row=1, column=2, sticky=NSEW)
+Entry(ventana, textvariable=strColeccion).grid(row=1, column=3, sticky=NSEW)
+###################
+label = Label(ventana, text="ISBN: ", bg="goldenrod", fg="white", relief=RAISED ).grid(row=2, column=0, sticky=NSEW)
+Entry(ventana, textvariable=strISBN).grid(row=2, column=1, sticky=NSEW)
+###################
+label = Label(ventana, text="Título: ", bg="goldenrod", fg="white", relief=RAISED ).grid(row=3, column=0, sticky=NSEW)
+Entry(ventana, textvariable=strTitulo).grid(row=3, column=1, sticky=NSEW)
+###################
+label = Label(ventana, text="Autor(es): ", bg="goldenrod", fg="white", relief=RAISED ).grid(row=4, column=0, sticky=NSEW)
+Entry(ventana, textvariable=strAutores).grid(row=4, column=1, sticky=NSEW)
+###################
+label = Label(ventana, text="Año: ", bg="goldenrod", fg="white", relief=RAISED ).grid(row=5, column=0, sticky=NSEW)
+Entry(ventana, textvariable=strAño).grid(row=5, column=1, sticky=NSEW)
+###################
+Button(ventana, text="Borrar", command=lambda: deteleBook()).grid(row=6, column=0, sticky=EW)
+Button(ventana, text="Modificar", command=lambda: updateBook()).grid(row=6, column=1, sticky=EW)
+Button(ventana, text="Buscar", command=lambda: findBook()).grid(row=6, column=2, sticky=EW)
+Button(ventana, text="Guardar", command=lambda: addBook()).grid(row=6, column=3, sticky=EW)
+
+
+ventana.mainloop()
